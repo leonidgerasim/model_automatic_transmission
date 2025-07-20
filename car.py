@@ -2,19 +2,6 @@ import pandas as pd
 import numpy as np
 
 
-class Environment:
-    def __init__(self, road_slop=0):
-        self.accr_ped = 0
-        self.brk_ped = 0
-        self.road_slop = road_slop
-
-    def acceleration(self, dt):
-        self.accr_ped += 200 * dt
-
-    def braking(self, dt):
-        self.brk_ped += 200 * dt
-
-
 class Engine:
     def __init__(self):
         self.eng_rpm = 1000 # rpm
@@ -32,3 +19,9 @@ class Engine:
 
     def get(self):
         return self.eng_rpm
+
+
+class TorqueConvertor:
+    def __init__(self):
+        pass
+
