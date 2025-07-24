@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from numpy.f2py.crackfortran import privatepattern
+from car import Car
 
 
 class Environment:
@@ -11,6 +12,7 @@ class Environment:
         self.dt = dt
         self.iter_t = 0
         self.t = t
+        self.car = Car()
 
     def acceleration(self, press):
         match press:
@@ -59,17 +61,19 @@ class Environment:
                 self.braking(scenario_brk[iter_brk])
                 iter_brk += 1
 
+            self.car.update(self.accr_ped, self.dt)
+            print(self.car.get_data())
+
             self.iter_t += self.dt
 
 
 
 if __name__ == "__main__":
-    env = Environment(dt=0.01)
-    scenario_acc = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]
+    env = Environment(dt=0.1)
+    scenario_acc = [1, 1, 1, 1, 0]
     scenario_brk = [1, 1, 1, 1, 1, 0, 0, 0]
     timing_acc = 0
     timing_brk = 0
     env.run_simulate(scenario_acc=scenario_acc, scenario_brk=scenario_brk, timing_acc=timing_acc, timing_brk=timing_brk)
     print(env.accr_ped, env.brk_ped)
-
 
