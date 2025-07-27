@@ -1,10 +1,8 @@
 import pandas as pd
 import numpy as np
-from car import Car
+#from car import Car
 import matplotlib.pyplot as plt
 from gearbox import TransmissionModel
-from engine import Engine
-
 
 # class Environment:
 #     def __init__(self, road_slop=0, dt=0.1, t=10):
@@ -103,32 +101,23 @@ if __name__ == "__main__":
 
 
     def throttle(t):
-        return 0.7 if t < 5 else 0.4
+        if t < 5:
+            return 0.8  # Интенсивный разгон
+        elif t < 15:
+            return 0.4  # Установившееся движение
+        else:
+            return 0.6
 
-
-    # # Запуск симуляции
-    # results = model.simulate(
-    #     t_span=[0, 10],
-    #     dt=0.05,
-    #     engine_torque_func=engine_torque,
-    #     #load_func=load_torque,
-    #     throttle_func=throttle
-    # )
     model = TransmissionModel()
     model.set_initial_state(800, 0)  # 800 RPM, скорость 0 м/с
 
 
-    def engine_torque(t):
-        """Характеристика двигателя"""
-        return 250 if t < 5 else 200  # Постоянный момент
-
-
     results = model.simulate(
-        t_span=[0, 10],
         dt=0.05,
-        engine_torque_func=engine_torque,
-        throttle_func=lambda t: 0.7
+        throttle_func=throttle
     )
+
+    print(results['time'][-1])
 
     def analyze_results(results, model):
         """Анализ результатов симуляции"""
@@ -154,10 +143,8 @@ if __name__ == "__main__":
             print(f"t={t:.2f}s -> Передача {gear + 1}")
 
 
-    # После запуска симуляции
-    analyze_results(results, model)
+    #analyze_results(results, model)
 
-    # Визуализация результатов
     plt.figure(figsize=(12, 10))
 
     plt.subplot(3, 1, 1)

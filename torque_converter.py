@@ -98,7 +98,7 @@ class TorqueConverter:
         k = np.interp(speed_ratio, self.speed_ratio_range, self.capacity_factor)
         tr = np.interp(speed_ratio, self.speed_ratio_range, self.torque_ratio)
 
-        pump_torque = k * self.density * (engine_rpm / 1000) ** 2 * self.diameter ** 5
+        pump_torque = k * self.density * (engine_rpm / 60) ** 2 * self.diameter ** 5
         turbine_torque = pump_torque * tr  # Без минуса!
 
         return pump_torque, turbine_torque
