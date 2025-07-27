@@ -7,47 +7,35 @@ import pandas as pd
 
 
 class TransmissionModel:
-    def __init__(self):
+    def __init__(self, chrom):
         # Параметры
-        self.gear_ratios = [3.5, 2.0, 1.4, 1.0]  # Передаточные отношения
+        self.gear_ratios = chrom[0:4]  # Передаточные отношения
         self.current_gear = 0  # Текущая передача
         #self.shift_map = self.create_shift_map()
 
         # Создание компонентов
-        self.tc = TorqueConverter(diameter=0.3)
+        self.tc = TorqueConverter(diameter=chrom[4])
 
         # Гидравлическая система
-        self.system_pressure = 3e6  # 30 бар
+        self.system_pressure = chrom[5]  # 30 бар
 
         # Создание соленоидов
-        self.solenoids = [
-            Solenoid(max_current=1.0, response_time=0.08,
-                              max_pressure=2e6, system_pressure=self.system_pressure),
-            Solenoid(max_current=1.0, response_time=0.08,
-                              max_pressure=2e6, system_pressure=self.system_pressure),
-            Solenoid(max_current=1.0, response_time=0.08,
-                              max_pressure=2e6, system_pressure=self.system_pressure),
-            Solenoid(max_current=1.0, response_time=0.08,
-                              max_pressure=2e6, system_pressure=self.system_pressure)
-        ]
+        self.solenoids = [Solenoid(max_current=chrom[6], response_time=chrom[7],
+                                   max_pressure=chrom[8], system_pressure=self.system_pressure) for i in range(4)]
 
         # Массив давлений
         self.pressures = [0.0] * len(self.solenoids)
 
         # Фрикционные муфты для каждой передачи
-        self.clutches = [
-            FrictionClutch(radius=0.15, area=0.015, n_pairs=5, mu_static=0.35, mu_kinetic=0.25),
-            FrictionClutch(radius=0.14, area=0.014, n_pairs=5, mu_static=0.33, mu_kinetic=0.23),
-            FrictionClutch(radius=0.13, area=0.013, n_pairs=5, mu_static=0.32, mu_kinetic=0.22),
-            FrictionClutch(radius=0.12, area=0.012, n_pairs=5, mu_static=0.30, mu_kinetic=0.20)
-        ]
+        self.clutches = [FrictionClutch(chrom[9 + i * 5], chrom[10 + i * 5], chrom[11 + i * 5],
+                                        chrom[12 + i * 5], chrom[13 + i * 5]) for i in range(4)]
 
         # Параметры динамики
-        self.engine_inertia = 0.5  # кг*м^2
-        self.input_inertia = 0.1  # кг*м^2
-        self.output_inertia = 1  # кг*м^2
-        self.vehicle_mass = 1500  # кг
-        self.wheel_radius = 0.3  # м
+        self.engine_inertia = chrom[29]  # кг*м^2
+        self.input_inertia = chrom[30]  # кг*м^2
+        self.output_inertia = chrom[31]  # кг*м^2
+        self.vehicle_mass = chrom[32]  # кг
+        self.wheel_radius = chrom[33]  # м
 
         self.last_shift_time = 0
         self.shift_delay = 0.5
@@ -70,8 +58,8 @@ class TransmissionModel:
 
     def _shift_gear(self, t, new_gear):
         if 0 <= new_gear < len(self.gear_ratios):
-            print(f"Переключение с {self.current_gear + 1} на {new_gear + 1} при "
-                  f"{self.current_speed_kmh:.1f} км/ч, {self.state[0]:.0f} RPM")
+            # print(f"Переключение с {self.current_gear + 1} на {new_gear + 1} при "
+            #       f"{self.current_speed_kmh:.1f} км/ч, {self.state[0]:.0f} RPM")
 
             self.current_gear = new_gear
             self.last_shift_time = t
@@ -234,7 +222,7 @@ class TransmissionModel:
         d_wheel_rpm = d_output / 3.9  # Главная передача
         d_vehicle = d_wheel_rpm * (2 * np.pi * self.wheel_radius) / 60  # м/с
 
-        return [d_engine, d_input, d_output, d_vehicle]
+        return [d_engine, d_input, d_output, d_vehicle], [engine_torque, pump_torque, turbine_torque, clutch_torque, load_torque]
 
     def simulate(self, dt, throttle_func):
 
@@ -256,7 +244,7 @@ class TransmissionModel:
         current_state = np.array(self.state, dtype=float)
 
         t = 0
-        while self.state[3] * 3.6 < 100:
+        while self.state[3] * 3.6 < 100 and t < 30:
             load = self.load_torque_func()
 
             throttle = throttle_func(t)
@@ -264,34 +252,46 @@ class TransmissionModel:
             # Расчет момента двигателя
             engine_torque = self.get_torque_e(throttle)
 
+            #print('integ')
             # Интегрирование
-            sol = solve_ivp(
-                fun=lambda t, y: self.transmission_dynamics(t, y, engine_torque, load, throttle),
-                t_span=[t, t + dt],
-                y0=current_state,
-                t_eval=[t + dt],
-                method='RK45'
-            )
+            # sol = solve_ivp(
+            #     fun=lambda t, y: self.transmission_dynamics(t, y, engine_torque, load, throttle),
+            #     t_span=[t, t + dt],
+            #     y0=current_state,
+            #     t_eval=[t + dt],
+            #     method='RK45'
+            # )
+
+            new_state, torques = self.transmission_dynamics(t, self.state, engine_torque, load, throttle)
+            # print(new_state)
+            # print(self.state)
+            # print(torques)
+            # print(self.pressures)
+            for i in range(len(new_state)):
+                self.state[i] += new_state[i] * dt
+
+            #print('success' + str(self.state[3]))
 
             # Обновление состояния с защитой
-            if sol.success:
-                new_state = sol.y[:, -1] if sol.y.ndim > 1 else sol.y
-                # Физические ограничения
-                new_state[0] = max(0, new_state[0])  # engine_rpm
-                new_state[1] = max(0, new_state[1])  # input_rpm
-                new_state[2] = max(0, new_state[2])  # output_rpm
-                current_state = new_state
-                self.state = current_state.copy()
-            else:
-                print(f"Ошибка интегрирования: {sol.message}")
-                break
+            # if sol.success:
+            #     print(sol.y[:, -1])
+            #     new_state = sol.y[:, -1] if sol.y.ndim > 1 else sol.y
+            #     # Физические ограничения
+            #     new_state[0] = max(0, new_state[0])  # engine_rpm
+            #     new_state[1] = max(0, new_state[1])  # input_rpm
+            #     new_state[2] = max(0, new_state[2])  # output_rpm
+            #     current_state = new_state
+            #     self.state = current_state.copy()
+            # else:
+            #     print(f"Ошибка интегрирования: {sol.message}")
+            #     break
 
             # Сохранение результатов
             results['time'].append(t)
-            results['engine_rpm'].append(current_state[0])
-            results['input_rpm'].append(current_state[1])
-            results['output_rpm'].append(current_state[2])
-            results['vehicle_speed'].append(current_state[3])
+            results['engine_rpm'].append(self.state[0])
+            results['input_rpm'].append(self.state[1])
+            results['output_rpm'].append(self.state[2])
+            results['vehicle_speed'].append(self.state[3])
             results['gear'].append(self.current_gear)
             results['pressures'].append(self.pressures.copy())
             #print(t)

@@ -1,8 +1,8 @@
-from run_simulate import Engine
+import numpy as np
 
-eng = Engine()
+m = [i for i in range(10)]
+np.random.shuffle(m)
+print(m)
 
-dt = 0.01
-for i in range(1000):
-    eng.engine_update(50, 200, dt)
-    print(eng.get())
+m[1:3] = [1, 2]
+print(m)
