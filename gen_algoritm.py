@@ -1,5 +1,6 @@
 from gearbox import TransmissionModel
 import numpy as np
+import pandas as pd
 from solenoid import Solenoid
 from friction_clutch import FrictionClutch
 import matplotlib.pyplot as plt
@@ -213,8 +214,53 @@ class GenAlgorithm:
         decision.graph()
         return decision
 
+    def print_generations(self):
+        header = ['Предаточное число - 1 передача',
+                  'Предаточное число - 2 передача',
+                  'Предаточное число - 3 передача',
+                  'Предаточное число - 4 передача',
+                  'Диаметр гидротрансформатора',
+                  'Давление насоса',
+                  'Максимальный ток соленоида',
+                  'Время отклика соленоида',
+                  'Максимальное управляющее давление соленоида',
+                  'Радиус 1 муфты',
+                  'Площадь 1 муфты',
+                  'Количество пар 1 муфты',
+                  'Коеффициент статического трения 1 муфты',
+                  'Коеффициент кинетического трения 1 муфты',
+                  'Радиус 2 муфты',
+                  'Площадь 2 муфты',
+                  'Количество пар 2 муфты',
+                  'Коеффициент статического трения 2 муфты',
+                  'Коеффициент кинетического трения 2 муфты',
+                  'Радиус 3 муфты',
+                  'Площадь 3 муфты',
+                  'Количество пар 3 муфты',
+                  'Коеффициент статического трения 3 муфты',
+                  'Коеффициент кинетического трения 3 муфты',
+                  'Радиус 4 муфты',
+                  'Площадь 4 муфты',
+                  'Количество пар 4 муфты',
+                  'Коеффициент статического трения 4 муфты',
+                  'Коеффициент кинетического трения 4 муфты',
+                  'Момент инерции двигателя',
+                  'Момент инерции входного вала',
+                  'Момент инерции выходного вала',
+                  'Масса авто',
+                  'Радиус колеса'
+                  ]
+        m = []
+        for gen in range(len(self.generations)):
+            m.append(['Generation ' + str(gen + 1)] + ['' for i in range(len(self.generations[0]) - 1)])
+            for i in range(len(self.generations[gen])):
+                m.append(self.generations[gen][i].chrom)
+        df = pd.DataFrame(m)
+        df.to_csv('results.csv', index=True, header=header)
+
 
 if __name__ == "__main__":
     gen_algorithm = GenAlgorithm(5)
     gen_algorithm.run(10)
     decision = gen_algorithm.get_decision()
+    gen_algorithm.print_generations()
