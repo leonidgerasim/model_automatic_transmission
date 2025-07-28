@@ -212,10 +212,12 @@ class GenAlgorithm:
         print(decision.chrom)
         print(decision.time_test)
         decision.graph()
+        df = pd.DataFrame([decision.chrom])
+        df.to_csv('decision.csv', header=self.header)
         return decision
 
     def print_generations(self):
-        header = ['Предаточное число - 1 передача',
+        self.header = ['Предаточное число - 1 передача',
                   'Предаточное число - 2 передача',
                   'Предаточное число - 3 передача',
                   'Предаточное число - 4 передача',
@@ -256,11 +258,12 @@ class GenAlgorithm:
             for i in range(len(self.generations[gen])):
                 m.append(self.generations[gen][i].chrom)
         df = pd.DataFrame(m)
-        df.to_csv('results.csv', index=True, header=header)
+        df.to_csv('results.csv', index=True, header=self.header)
 
 
 if __name__ == "__main__":
     gen_algorithm = GenAlgorithm(5)
     gen_algorithm.run(10)
-    decision = gen_algorithm.get_decision()
     gen_algorithm.print_generations()
+    decision = gen_algorithm.get_decision()
+
