@@ -7,7 +7,7 @@ class Solenoid:
     def __init__(self, max_current=1.0, response_time=0.05, max_pressure=2e6, system_pressure=3e6):
         """
         :param max_current: Максимальный ток управления (А)
-        :param response_time: Время отклика (с)
+        :param response_time:  Время отклика (с)
         :param max_pressure: Максимальное управляющее давление (Па)
         :param system_pressure: Давление в системе (Па)
         """
