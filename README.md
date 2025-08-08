@@ -9,7 +9,7 @@ This project includes a simplified physical model of an automatic transmission, 
 
 ## How to install this Python project
 
-1. clone this projec
+1. clone this project
 2. make sure you have Python 3.10 or higher
 3. if you don't have Python 3.10 or higher, install it from the official website (https://www.python.org/downloads/)
 4. go to the project repository on your device, open a terminal and enter the command 'pip install -r requirements.txt' to install the required libraries
